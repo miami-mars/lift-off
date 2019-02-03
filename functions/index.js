@@ -1,5 +1,3 @@
-// See https://github.com/dialogflow/dialogflow-fulfillment-nodejs
-// for Dialogflow fulfillment library docs, samples, and to report issues
 'use strict';
 
 const https = require('https');
@@ -13,25 +11,28 @@ process.env.DEBUG = 'dialogflow:debug'; // enables lib debugging statements
  
 exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, response) => {
     const agent = new WebhookClient({ request, response });
-    console.log('Dialogflow Request headers: ' + JSON.stringify(request.headers));
-    console.log('Dialogflow Request body: ' + JSON.stringify(request.body));
+    console.log('Dialogflow Request Headers: ' + JSON.stringify(request.headers));
+    console.log('Dialogflow Request Body: ' + JSON.stringify(request.body));
       
     function welcome(agent) {
         agent.add(`Hey! I'm Lift Off. How can I help?`);
         agent.add(`Greetings! How can I assist?`);
-        agent.add(new Suggestion('Next Launch'));
+        agent.add(new Suggestion(`Next Launch`));
     }
      
     function fallback(agent) {
         agent.add(`I didn't understand`);
         agent.add(`I'm sorry, can you try again?`);
-         agent.add(new Suggestion('Next Launch'));
+        agent.add(new Suggestion('Next Launch'));
     }
+
     function next_launch(agent) {
         return new Promise((resolve, reject) => {
           // Create the path for the HTTPS request to get the launch
           let path = '/json/launch/next';
           console.log('API Request: ' + host + path);
+	  console.log('Numbers: ' + agent.parameters['number']);
+	  console.log('Slug: ' + agent.parameters['slug']);
           
           // Make the HTTPS request to get the launch
           https.get({host: host, path: path}, (res) => {
@@ -40,16 +41,14 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
               res.on('end', () => {
                   // After all the data has been received parse the JSON for desired data
                   let response = JSON.parse(body);
+		  let payload = response.result[0];
                   
-                  let launchDescription = response.result[0].launch_description;
-                  let buttonText = 'Rocket Launch Live - ' + response.result[0].name;
-                  let outboundUrl = 'https://' + host + '/' + response.result[0].slug;
+                  let launchDescription = payload.launch_description;
+                  let buttonText = 'Rocket Launch Live - ' + payload.name;
+                  let outboundUrl = 'https://' + host + '/' + payload.slug;
                 
-                  let output = launchDescription;
-                  agent.add(output);
+                  agent.add(launchDescription);
 
-                //    agent.add(new Suggestion(`Quick Reply`));
-                //    agent.add(new Suggestion(`Suggestion`));
                   resolve(agent);
               });
               res.on('error', (error) => {
