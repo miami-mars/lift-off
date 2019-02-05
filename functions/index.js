@@ -28,11 +28,18 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
 
     function next_launch(agent) {
         return new Promise((resolve, reject) => {
-          // Create the path for the HTTPS request to get the launch
-          let path = '/json/launch/next';
-          console.log('API Request: ' + host + path);
-	  console.log('Numbers: ' + agent.parameters['number']);
-	  console.log('Slug: ' + agent.parameters['slug']);
+            // Create the path for the HTTPS request to get the launch
+            let path = '/json/launch/next';
+            console.log('API Request: ' + host + path);
+	    console.log('Numbers: ' + agent.parameters['number']);
+	    console.log('Slug: ' + agent.parameters['slug']);
+          
+	    if(agent.parameters['number']) {
+                path = path + '/' + agent.parameters['number'];
+	    }
+	    if(agent.parameters['slug']) {
+                path = path + '/' + agent.parameters['slug'];
+	    }
           
           // Make the HTTPS request to get the launch
           https.get({host: host, path: path}, (res) => {
