@@ -15,7 +15,6 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
     console.log('Dialogflow Request Body: ' + JSON.stringify(request.body));
       
     function welcome(agent) {
-        agent.add(`Hey! I'm Lift Off. How can I help?`);
         agent.add(`Greetings! How can I assist?`);
         agent.add(new Suggestion(`Next Launch`));
     }
@@ -48,15 +47,25 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
               res.on('end', () => {
                   // After all the data has been received parse the JSON for desired data
                   let response = JSON.parse(body);
-		  let payload = response.result[0];
+                  if (response.result.length > 1) {
+                      let payload = response.result;
+                      let body = "Here are the following launches.\n"
+                      var i = 0;
+                      for(i = 0; i < payload.length; i++) {
+                          body = body + payload[i].slug + " on " + payload[i].date_str + ". \n";
+		      }
+                      agent.add(body);
+                      resolve(agent);
+		  } else {
+		      let payload = response.result[0];
                   
-                  let launchDescription = payload.launch_description;
-                  let buttonText = 'Rocket Launch Live - ' + payload.name;
-                  let outboundUrl = 'https://' + host + '/' + payload.slug;
+                      let launchDescription = payload.launch_description;
+                      let buttonText = 'Rocket Launch Live - ' + payload.name;
+                      let outboundUrl = 'https://' + host + '/' + payload.slug;
                 
-                  agent.add(launchDescription);
-
-                  resolve(agent);
+                      agent.add(launchDescription);
+                      resolve(agent);
+		  }
               });
               res.on('error', (error) => {
                   console.log(`Error calling the Rocket Launch API: ${error}`);
