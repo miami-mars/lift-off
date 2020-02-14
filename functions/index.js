@@ -14,30 +14,19 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
     console.log('Dialogflow Request Headers: ' + JSON.stringify(request.headers));
     console.log('Dialogflow Request Body: ' + JSON.stringify(request.body));
       
-    function welcome(agent) {
-        agent.add(`Greetings! How can I assist?`);
-        agent.add(new Suggestion(`Next Launch`));
-    }
-     
-    function fallback(agent) {
-        agent.add(`I didn't understand`);
-        agent.add(`I'm sorry, can you try again?`);
-        agent.add(new Suggestion('Next Launch'));
-    }
-
     function next_launch(agent) {
         return new Promise((resolve, reject) => {
             // Create the path for the HTTPS request to get the launch
             let path = '/json/launch/next';
             console.log('API Request: ' + host + path);
-	    console.log('Numbers: ' + agent.parameters['number']);
-	    console.log('Slug: ' + agent.parameters['slug']);
+	    console.log('Numbers: ' + agent.parameters.number);
+	    console.log('Slug: ' + agent.parameters.slug);
           
-	    if(agent.parameters['number']) {
-                path = path + '/' + agent.parameters['number'];
+	    if(agent.parameters.number) {
+                path = path + '/' + agent.parameters.number;
 	    }
 	    if(agent.parameters['slug']) {
-                path = path + '/' + agent.parameters['slug'];
+                path = path + '/' + agent.parameters.slug;
 	    }
           
           // Make the HTTPS request to get the launch
@@ -49,7 +38,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
                   let response = JSON.parse(body);
                   if (response.result.length > 1) {
                       let payload = response.result;
-                      let body = "Here are the following launches.\n"
+                      let body = "Here are the following launches.\n";
                       var i = 0;
                       for(i = 0; i < payload.length; i++) {
                           body = body + payload[i].slug + " on " + payload[i].date_str + ". \n";
@@ -77,8 +66,6 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
 
     // Run the proper function handler based on the matched Dialogflow intent name
     let intentMap = new Map();
-    intentMap.set('Default Welcome Intent', welcome);
-    intentMap.set('Default Fallback Intent', fallback);
     intentMap.set('Next Launch', next_launch);
     agent.handleRequest(intentMap);
 });
